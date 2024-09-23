@@ -255,7 +255,15 @@ button.accent {
     width: 100%;
     color: #fff;
 }
+.typing-notification {
+    padding: 5px 20px;
+    color: #777;
+    font-size: 14px;
+    text-align: left;
+    height: 20px;
 
+    visibility: hidden; /* Initially hidden */
+}
 
 @media screen and (max-width: 730px) {
 

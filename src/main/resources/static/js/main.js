@@ -10,7 +10,9 @@
 
     var stompClient = null;
     var username = null;
-
+    var typing = false;
+    var timeout = undefined;
+    messageInput.addEventListener('input', onTyping, true);
     var colors = [
         '#2196F3', '#32c787', '#00BCD4', '#ff5652',
         '#ffc107', '#ff85af', '#FF9800', '#39bbb0'
@@ -69,7 +71,10 @@
 
     function onMessageReceived(payload) {
         var message = JSON.parse(payload.body);
-
+        if (message.type === 'TYPING') {
+                displayTypingNotification(message.sender);
+                return;
+            }
         var messageElement = document.createElement('li');
 
         if(message.type === 'JOIN') {
@@ -113,6 +118,48 @@
         var index = Math.abs(hash % colors.length);
         return colors[index];
     }
+
+    // ############# TYPING ###########
+    function displayTypingNotification(sender) {
+        //Exclude self from typing notification
+        if (sender === username) {
+            return;
+        }
+        var typingElement = document.querySelector('#typing-notification');
+        typingElement.textContent = sender + ' is typing...';
+        typingElement.style.visibility = 'visible'; // Show typing notification
+
+        // Hide typing notification after X seconds
+        setTimeout(function() {
+            typingElement.style.visibility = 'hidden';
+            typingElement.textContent = '';
+        }, 2000);
+    }
+    function onTyping() {
+        if (!typing) {
+            typing = true;
+            sendTypingNotification();
+            timeout = setTimeout(stopTyping, 2000); // Stop typing notification after X seconds of no activity
+        } else {
+            clearTimeout(timeout);
+            timeout = setTimeout(stopTyping, 2000);
+        }
+    }
+
+    function sendTypingNotification() {
+        if (stompClient) {
+            var typingMessage = {
+                sender: username,
+                type: 'TYPING'
+            };
+            stompClient.send("/app/chat.typing", {}, JSON.stringify(typingMessage));
+        }
+    }
+
+    function stopTyping() {
+        typing = false;
+    }
+
 
     usernameForm.addEventListener('submit', connect, true)
     messageForm.addEventListener('submit', sendMessage, true)
